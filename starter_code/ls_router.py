@@ -45,6 +45,11 @@ class LSRouter(Router):
         elif tick < BROADCAST_INTERVAL:
             # TODO: Go through the LSAs received so far.
             # broadcast each LSA to this router's neighbors if the LSA has not been broadcasted yet
+            for key, val  in self.lsa_dict:
+                if key not in self.broadcasted and not self.broadcasted[key]:
+                    for neighbor in self.neighbors:
+                        self.send(neighbor, val, key)
+                        self.broadcasted[key] = True
             pass
         else:
             return
@@ -66,6 +71,20 @@ class LSRouter(Router):
         # (3) If it helps, you can use the helper function next_hop below to compute the next hop once you
         # have populated the prev dictionary which maps a destination to the penultimate hop
         # on the shortest path to this destination from this router.
+        prev = dict()
+        pos_infinity = float('inf')
+        distance = dict()
+        #setting up the initial node to be zero and then all other nodes to be infinity
+        prev[self.router_id]=-1, distance[self.router_id] = 0
+        nodes = [self.router_id]
+        for key , val in self.lsa_dict:
+            if key == self.router_id:
+                continue
+            else:
+                distance[key] = pos_infinity
+                prev[key] = -1
+                nodes.append(key)
+        counter = len(self.router_id)
         pass
 
     # Recursive function for computing next hops using the prev dictionary
