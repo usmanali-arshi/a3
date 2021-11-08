@@ -1,7 +1,6 @@
 # Base router class
 from router import Router
 
-
 # Class representing distance vector routers
 class DVRouter(Router):
     def __init__(self, router_id):

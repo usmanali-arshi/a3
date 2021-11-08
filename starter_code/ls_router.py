@@ -43,14 +43,13 @@ class LSRouter(Router):
             self.routes_computed = True
             return
         elif tick < BROADCAST_INTERVAL:
-            # TODO: Go through the LSAs received so far.
-            # broadcast each LSA to this router's neighbors if the LSA has not been broadcasted yet
-            for key, val  in self.lsa_dict:
-                if key not in self.broadcasted and not self.broadcasted[key]:
-                    for neighbor in self.neighbors:
-                        self.send(neighbor, val, key)
-                        self.broadcasted[key] = True
             pass
+            for key in self.lsa_dict:
+                if (key not in self.broadcasted or not self.broadcasted[key]):
+                    for neighbor in self.neighbors:
+                        self.send(neighbor, self.lsa_dict[key] , key)
+                        self.broadcasted[key] = True
+
         else:
             return
 
@@ -73,19 +72,54 @@ class LSRouter(Router):
         # on the shortest path to this destination from this router.
         prev = dict()
         pos_infinity = float('inf')
+
         distance = dict()
         #setting up the initial node to be zero and then all other nodes to be infinity
-        prev[self.router_id]=-1, distance[self.router_id] = 0
+        prev[self.router_id]= -1
+        distance[self.router_id] = 0
+
         nodes = [self.router_id]
-        for key , val in self.lsa_dict:
+        for key in self.lsa_dict:
             if key == self.router_id:
                 continue
             else:
-                distance[key] = pos_infinity
                 prev[key] = -1
+                distance[key] = pos_infinity
                 nodes.append(key)
-        counter = len(self.router_id)
+
+        counter = len(nodes)
+        indexx=0
+
+        print(nodes)
+        print("len is ",counter)
+        while(counter > 0):
+            min_node = min(nodes, key = lambda x : distance[x])
+
+            print("min node", min_node)
+            print(nodes)
+
+            # nodes.pop(min_node)
+            nodes.remove(min_node)
+            counter -=1
+            for link in self.lsa_dict[min_node]:
+                # print(self.lsa_dict[min_node][link])
+                new_distance = self.lsa_dict[min_node][link] + distance[min_node]
+                # print(new_dist)
+                if new_distance < distance[link]:
+                    #update the distance than as its the new shortest
+                    distance[link] = new_distance
+                    prev[link] = min_node
+
+        print("prev is", prev)
+        self.fwd_table[self.router_id] = self.router_id 
+        for key in self.lsa_dict: 
+            #skip
+            if (key == self.router_id):
+                continue
+            else:
+                self.fwd_table[key] = self.next_hop(key, prev) 
         pass
+          
 
     # Recursive function for computing next hops using the prev dictionary
     def next_hop(self, dst, prev):
